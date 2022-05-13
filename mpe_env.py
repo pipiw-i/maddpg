@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time : 2022/5/12 上午10:20
-# @Author :  wangshulei
+# @Author :  wang
 # @FileName: mpe_env.py
 # @Software: PyCharm
 from RL_algorithm_package.maddpg.mpe.environment import MultiAgentEnv

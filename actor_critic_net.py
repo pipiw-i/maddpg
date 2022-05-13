@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time : 2022/5/11 下午9:12
-# @Author :  wangshulei
+# @Author :  wang
 # @FileName: actor_critic_net.py
 # @Software: PyCharm
 import tensorflow as tf

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time : 2022/5/12 上午10:13
-# @Author :  wangshulei
+# @Author :  wang
 # @FileName: mpe_train.py
 # @Software: PyCharm
 from matplotlib import pyplot as plt

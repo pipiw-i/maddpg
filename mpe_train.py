@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time : 2022/5/12 上午10:13
-# @Author :  wang
+# @Author :  wangshulei
 # @FileName: mpe_train.py
 # @Software: PyCharm
 from matplotlib import pyplot as plt
@@ -12,21 +12,20 @@ from RL_algorithm_package.maddpg.shared_exp import SharedExp
 
 SEED = 65535
 
-if __name__ == '__main__':
-    # 环境初始化
-    save_file = 'run3'
+
+def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
     env = mpe_env('simple_spread', seed=SEED)
     obs_dim, action_dim = env.get_space()
     agent_number = env.get_agent_number()
     # policy初始化
     maddpg_agents = maddpg_policy(obs_dim=obs_dim, action_dim=action_dim,
                                   agent_number=agent_number,
-                                  actor_learning_rate=5e-4, critic_learning_rate=5e-4,
+                                  actor_learning_rate=actor_learning_rate, critic_learning_rate=critic_learning_rate,
                                   action_span=0.5, soft_tau=1e-2, log_dir=save_file + '/results')
     # 经验池初始化
     all_agent_exp = []
     for agent_index in range(agent_number):
-        exp = SharedExp(exp_size=5120, batch_size=256, obs_dim=obs_dim, action_dim=action_dim,
+        exp = SharedExp(exp_size=51200, batch_size=128, obs_dim=obs_dim, action_dim=action_dim,
                         r_dim=1, done_dim=1, agent_number=agent_number, agent_index=agent_index)
         all_agent_exp.append(exp)
     score = []
@@ -53,22 +52,30 @@ if __name__ == '__main__':
             action_n = maddpg_agents.get_all_action(obs_n)
             # action_n = [np.array([0, 0, 0, 1, 0]), np.array([0, 0, 0, 1, 0]), np.array([0, 0, 0, 1, 0])]
             new_obs_n, reward_n, done_n, info_n = env.mpe_env.step(action_n)
+            exp_index_n = []
             for agent_index in range(agent_number):
                 all_agent_exp[agent_index].exp_store(obs_n, action_n, reward_n, new_obs_n, done_n)
-            index, _ = all_agent_exp[0].sample()
-            maddpg_agents.update(all_agent_exp, index)
+                # 从三个智能体中的经验分别采样，分别学习，而不是全都学习相同位置的经验
+                index, _ = all_agent_exp[agent_index].sample()
+                exp_index_n.append(index)
+            maddpg_agents.update(all_agent_exp, exp_index_n)
             score_one_episode += reward_n[0][0]
             obs_n = new_obs_n
-        maddpg_agents.logs(score_one_episode, 20 * (i_episode+1))
+        maddpg_agents.logs(score_one_episode, 20 * (i_episode + 1))
         if (i_episode + 1) % 1000 == 0:
             if not os.path.exists(save_file + '/MADDPG_img'):
                 os.makedirs(save_file + '/MADDPG_img')
             plt.plot(score)  # 绘制波形
             plt.plot(avg_score)  # 绘制波形
             plt.savefig(save_file + f"/MADDPG_img/MADDPG_score:{i_episode + 1}.png")
+
             maddpg_agents.save_models(save_file, i_episode + 1)
 
         score.append(score_one_episode)
         avg = np.mean(score[-100:])
         avg_score.append(avg)
         print(f"i_episode is {i_episode},score_one_episode is {score_one_episode},avg_score is {avg}")
+
+
+if __name__ == '__main__':
+    run_mpe('run64', 1e-2, 1e-2)

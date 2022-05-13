@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time : 2022/5/11 下午8:34
-# @Author :  wang
+# @Author :  wangshulei
 # @FileName: exp.py
 # @Software: PyCharm
 import pandas as pd

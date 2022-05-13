@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time : 2022/5/11 下午9:12
-# @Author :  wang
+# @Author :  wangshulei
 # @FileName: actor_critic_net.py
 # @Software: PyCharm
 import tensorflow as tf
@@ -32,14 +32,14 @@ class critic:
                                   input_magent_a[0],
                                   input_magent_a[1],
                                   input_magent_a[2]], axis=-1)
-        dense1 = tf.keras.layers.Dense(256, activation='relu')(input_critic)
+        dense1 = tf.keras.layers.Dense(64, activation='relu')(input_critic)
         dense2 = tf.keras.layers.Dense(64, activation='relu')(dense1)
         critic_output = tf.keras.layers.Dense(1)(dense2)
         critic_model = tf.keras.Model(inputs=[input_s, input_magent_a[0], input_magent_a[1], input_magent_a[2]],
                                       outputs=critic_output,
                                       trainable=trainable,
                                       name=f'agent{agent_index}_{critic_name}')
-        critic_model.compile(optimizer=tf.keras.optimizers.RMSprop(self.critic_learning_rate))
+        critic_model.compile(optimizer=tf.keras.optimizers.Adam(self.critic_learning_rate))
         return critic_model
 
 
@@ -63,7 +63,7 @@ class actor:
     def __actor_net(self, trainable, agent_index, actor_name,action_span):
         # MADDPG的演员是根据自己智能体的观测值来得到动作的
         input_s = tf.keras.Input(shape=(self.obs_dim,), dtype="float32")
-        dense1 = tf.keras.layers.Dense(256, activation='relu')(input_s)
+        dense1 = tf.keras.layers.Dense(64, activation='relu')(input_s)
         dense2 = tf.keras.layers.Dense(64, activation='relu')(dense1)
         # dense3 = tf.keras.layers.Dense(64, activation='relu')(dense2)
         actor_output = tf.keras.layers.Dense(self.act_dim, activation='tanh')(dense2)
@@ -73,5 +73,5 @@ class actor:
                                      outputs=actor_output,
                                      trainable=trainable,
                                      name=f'agent{agent_index}_{actor_name}')
-        actor_model.compile(optimizer=tf.keras.optimizers.RMSprop(learning_rate=self.actor_learning_rate))
+        actor_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.actor_learning_rate))
         return actor_model

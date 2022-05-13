@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time : 2022/5/12 上午10:14
-# @Author :  wang
+# @Author :  wangshulei
 # @FileName: utils.py
 # @Software: PyCharm
 import numpy as np

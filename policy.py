@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time : 2022/5/11 下午9:49
-# @Author :  wang
+# @Author :  wangshulei
 # @FileName: policy.py
 # @Software: PyCharm
 import numpy as np
@@ -22,7 +22,7 @@ class maddpg_policy:
                  action_span,
                  soft_tau,
                  log_dir,
-                 gamma=0.99,
+                 gamma=0.95,
                  actor_name='actor',
                  critic_name='critic',
                  ):
@@ -92,47 +92,26 @@ class maddpg_policy:
             param.append(np.add(param_pred[i], param_target[i]))
         target_model.set_weights(param)
 
-    def update(self, all_agent_exp, index):
+    def update(self, all_agent_exp, exp_index_n):
         exp_n = []
-        for agent_index in range(self.agent_number):
-            now_agent_index, obs, action, rew, obs_, done = all_agent_exp[agent_index].get_exp_from_index(index)
+        for agent_index, exp_index in zip(range(self.agent_number), exp_index_n):
+            now_agent_index, obs, action, rew, obs_, done = all_agent_exp[agent_index].get_exp_from_index(exp_index)
             exp = [now_agent_index, obs, action, rew, obs_, done]
             exp_n.append(exp)
         # 更新网络
         with tf.GradientTape(persistent=True) as Tape:
-            # actor_pred 输入obs 得到的输出列表，用于更新actor网络
-            agent_action = []
-            # actor_target 输入obs_得到的输出列表,用于更新critic网络
-            agent_action_ = []
-            for agent_index in range(self.agent_number):
-                # 得到当前的状态obs --> exp_n[agent_index][1]
-                # 使用actor计算出相应的动作输出，用于更新actor网络
-                actor_pred = self.actor_pred_list[agent_index].actor
-                obs = exp_n[agent_index][1]
-                agent_action.append(actor_pred(obs))
-                actor_target = self.actor_target_list[agent_index].actor
-                obs_ = exp_n[agent_index][4]
-                agent_action_.append(actor_target(obs_))
-
             for agent_index in range(self.agent_number):
                 actor_pred = self.actor_pred_list[agent_index].actor
                 critic_pred = self.critic_pred_list[agent_index].critic
-                # 得到当前的状态obs --> exp_n[agent_index][1]
-                obs = exp_n[agent_index][1]
-                # 输入到critic网络，输出预测值，这里当智能体的个数不同的时候，需要修改
-                ###############################################################################
-                Q_pred = critic_pred([obs, agent_action[0], agent_action[1], agent_action[2]])
-                ###############################################################################
-                actor_pred_loss = - tf.math.reduce_mean(Q_pred)
-                # 用于更新actor网络
-                gradients = Tape.gradient(actor_pred_loss, actor_pred.trainable_variables)
-                actor_pred.optimizer.apply_gradients(zip(gradients, actor_pred.trainable_variables))
-                # 更新critic网络
-                # agent_action_
                 critic_target = self.critic_target_list[agent_index].critic
+                # 更新critic网络
                 action = exp_n[agent_index][2]
                 reward = exp_n[agent_index][3]
                 obs_ = exp_n[agent_index][4]
+                agent_action_ = []
+                for i in range(self.agent_number):
+                    actor_target = self.actor_target_list[i].actor
+                    agent_action_.append(actor_target(obs_))
                 ###############################################################################
                 # 这里当智能体的个数不同的时候，需要修改
                 Q_pred_critic = critic_pred([obs, action[:, 0, :], action[:, 1, :], action[:, 2, :]])
@@ -143,6 +122,21 @@ class maddpg_policy:
                 loss_critic = tf.reduce_mean(loss_critic)
                 critic_gradients = Tape.gradient(loss_critic, critic_pred.trainable_variables)
                 critic_pred.optimizer.apply_gradients(zip(critic_gradients, critic_pred.trainable_variables))
+                # 更新actor
+                obs = exp_n[agent_index][1]  # 得到当前的状态obs --> exp_n[agent_index][1]
+                agent_action = []
+                for i in range(self.agent_number):
+                    actor_pred = self.actor_pred_list[i].actor
+                    agent_action.append(actor_pred(obs))
+                # 输入到critic网络，输出预测值，这里当智能体的个数不同的时候，需要修改
+                ###############################################################################
+                Q_pred = critic_pred([obs, agent_action[0], agent_action[1], agent_action[2]])
+                ###############################################################################
+                actor_pred_loss = - tf.math.reduce_mean(Q_pred)
+                # 用于更新actor网络
+                gradients = Tape.gradient(actor_pred_loss, actor_pred.trainable_variables)
+                actor_pred.optimizer.apply_gradients(zip(gradients, actor_pred.trainable_variables))
+
         for agent_index in range(self.agent_number):
             self.soft_param_update(self.critic_target_list[agent_index].critic,
                                    self.critic_pred_list[agent_index].critic)

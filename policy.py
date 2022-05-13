@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time : 2022/5/11 下午9:49
-# @Author :  wangshulei
+# @Author :  wang
 # @FileName: policy.py
 # @Software: PyCharm
 import numpy as np

@@ -78,4 +78,4 @@ def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
 
 
 if __name__ == '__main__':
-    run_mpe('run64', 1e-2, 1e-2)
+    run_mpe('run64', 1e-3, 1e-3)

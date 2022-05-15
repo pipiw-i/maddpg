@@ -25,7 +25,7 @@ def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
     # 经验池初始化
     all_agent_exp = []
     for agent_index in range(agent_number):
-        exp = SharedExp(exp_size=51200, batch_size=128, obs_dim=obs_dim, action_dim=action_dim,
+        exp = SharedExp(exp_size=51200, batch_size=256, obs_dim=obs_dim, action_dim=action_dim,
                         r_dim=1, done_dim=1, agent_number=agent_number, agent_index=agent_index)
         all_agent_exp.append(exp)
     score = []
@@ -55,8 +55,12 @@ def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
             exp_index_n = []
             for agent_index in range(agent_number):
                 all_agent_exp[agent_index].exp_store(obs_n, action_n, reward_n, new_obs_n, done_n)
-                # 从三个智能体中的经验分别采样，分别学习，而不是全都学习相同位置的经验
-                index, _ = all_agent_exp[agent_index].sample()
+                # 从三个智能体中的经验分别采样，分别学习，而不是全都学习相同位置的经验 这种方式非常的难以学到正确的策略
+                # index, _ = all_agent_exp[agent_index].sample()
+                # exp_index_n.append(index)
+            # 全都采用相同时刻的经验进行而学习
+            index, _ = all_agent_exp[0].sample()
+            for agent_index in range(agent_number):
                 exp_index_n.append(index)
             maddpg_agents.update(all_agent_exp, exp_index_n)
             score_one_episode += reward_n[0][0]
@@ -75,7 +79,10 @@ def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
         avg = np.mean(score[-100:])
         avg_score.append(avg)
         print(f"i_episode is {i_episode},score_one_episode is {score_one_episode},avg_score is {avg}")
+    env.mpe_env.close()
 
 
 if __name__ == '__main__':
-    run_mpe('run64', 1e-3, 1e-3)
+    run_mpe('run64_1', 5e-3, 5e-3)
+    run_mpe('run64_2', 5e-4, 5e-4)
+    run_mpe('run64_3', 5e-3, 5e-3)

@@ -101,41 +101,45 @@ class maddpg_policy:
         # 更新网络
         with tf.GradientTape(persistent=True) as Tape:
             for agent_index in range(self.agent_number):
+                obs = exp_n[agent_index][1]  # 得到当前的状态obs --> exp_n[agent_index][1]
+                action = self.actor_pred_list[agent_index].actor(obs)  # 得到当前agent关于自己的obs的动作值
+                if agent_index == 0:
+                    all_obs = tf.convert_to_tensor(obs)
+                    all_action = action
+                else:
+                    all_obs = tf.concat([all_obs, obs], axis=-1)
+                    all_action = tf.concat([all_action, action], axis=-1)
+            # 得到所有的actor_target网络关于自身obs_的值，更新critic网络
+            for agent_index in range(self.agent_number):
+                obs_ = exp_n[agent_index][4]  # 得到当前的状态obs --> exp_n[agent_index][1]
+                action_ = self.actor_target_list[agent_index].actor(obs_)  # 得到当前agent关于自己的obs的动作值
+                if agent_index == 0:
+                    all_obs_ = tf.convert_to_tensor(obs_)
+                    all_action_ = action_
+                else:
+                    all_obs_ = tf.concat([all_obs_, obs_], axis=-1)
+                    all_action_ = tf.concat([all_action_, action_], axis=-1)
+            # 对agent依次进行更新
+            for agent_index in range(self.agent_number):
                 actor_pred = self.actor_pred_list[agent_index].actor
                 critic_pred = self.critic_pred_list[agent_index].critic
                 critic_target = self.critic_target_list[agent_index].critic
-                # 更新critic网络
+                # 得到当前更新agent的所有经验
                 action = exp_n[agent_index][2]
                 reward = exp_n[agent_index][3]
-                obs_ = exp_n[agent_index][4]
-                agent_action_ = []
-                for i in range(self.agent_number):
-                    actor_target = self.actor_target_list[i].actor
-                    agent_action_.append(actor_target(obs_))
-                ###############################################################################
-                # 这里当智能体的个数不同的时候，需要修改
-                Q_pred_critic = critic_pred([obs, action[:, 0, :], action[:, 1, :], action[:, 2, :]])
-                Q_target_critic = reward + self.gamma * critic_target(
-                    [obs_, agent_action_[0], agent_action_[1], agent_action_[2]])
-                ###############################################################################
+                # 更新actor,每一个智能体的actor需要他本身的critic_pred，输入状态动作，然后最大化这个值
+                Q_pred = critic_pred([all_obs, all_action])
+                actor_pred_loss = - tf.math.reduce_mean(Q_pred)
+                gradients = Tape.gradient(actor_pred_loss, actor_pred.trainable_variables)
+                actor_pred.optimizer.apply_gradients(zip(gradients, actor_pred.trainable_variables))
+                # 更新critic网络
+                Q_pred_critic = critic_pred([all_obs, action])
+                Q_target_critic = reward + self.gamma * critic_target([all_obs_, all_action_])
                 loss_critic = tf.keras.losses.mse(Q_target_critic, Q_pred_critic)
                 loss_critic = tf.reduce_mean(loss_critic)
                 critic_gradients = Tape.gradient(loss_critic, critic_pred.trainable_variables)
                 critic_pred.optimizer.apply_gradients(zip(critic_gradients, critic_pred.trainable_variables))
                 # 更新actor
-                obs = exp_n[agent_index][1]  # 得到当前的状态obs --> exp_n[agent_index][1]
-                agent_action = []
-                for i in range(self.agent_number):
-                    actor_pred = self.actor_pred_list[i].actor
-                    agent_action.append(actor_pred(obs))
-                # 输入到critic网络，输出预测值，这里当智能体的个数不同的时候，需要修改
-                ###############################################################################
-                Q_pred = critic_pred([obs, agent_action[0], agent_action[1], agent_action[2]])
-                ###############################################################################
-                actor_pred_loss = - tf.math.reduce_mean(Q_pred)
-                # 用于更新actor网络
-                gradients = Tape.gradient(actor_pred_loss, actor_pred.trainable_variables)
-                actor_pred.optimizer.apply_gradients(zip(gradients, actor_pred.trainable_variables))
 
         for agent_index in range(self.agent_number):
             self.soft_param_update(self.critic_target_list[agent_index].critic,

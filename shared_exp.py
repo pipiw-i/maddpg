@@ -68,7 +68,6 @@ class SharedExp(Exp):
         exp = self.exp_pool.loc[index]
         obs = exp.loc[:, :self.obs_dim - 1].to_numpy()
         action = exp.loc[:, self.obs_dim:self.obs_dim - 1 + self.action_exp_length].to_numpy()
-        action = action.reshape(self.batch_size, self.agent_number, self.action_dim)
         rew = np.array(exp.loc[:, self.obs_dim + self.action_exp_length]).reshape(self.batch_size, 1)
         obs_ = np.array(exp.loc[:, self.obs_dim + self.action_exp_length + 1:self.obs_dim * 2 + self.action_exp_length])
         done = np.array(exp.loc[:, self.obs_dim * 2 + self.action_exp_length + 1])

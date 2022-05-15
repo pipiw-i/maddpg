@@ -77,6 +77,17 @@ class maddpg_policy:
         action_n = [action.numpy() for action in action_n]
         return action_n
 
+    def get_all_test_action(self, obs_n):
+        action_n = [self.__choose_test_action(obs.astype(np.float32), agent_index) for obs, agent_index in
+                    zip(obs_n, range(self.agent_number))]
+        action_n = [action.numpy() for action in action_n]
+        return action_n
+
+    def __choose_test_action(self, s, agent_index):
+        s = tf.reshape(s, [1, self.obs_dim])
+        a = self.actor_pred_list[agent_index].actor(s)
+        return a[0]
+
     def soft_param_update(self, target_model, pred_model):
         """
         采用软更新的方式进行参数的更新，不采用DQN中的直接赋值操作，也可以采用别的软更新方式来实现。

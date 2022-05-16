@@ -11,6 +11,8 @@ from RL_algorithm_package.maddpg.mpe_env import mpe_env
 from RL_algorithm_package.maddpg.shared_exp import SharedExp
 
 SEED = 65535
+ACTION_SPAN = 0.5
+
 
 
 def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
@@ -30,11 +32,12 @@ def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
         all_agent_exp.append(exp)
     score = []
     avg_score = []
+    explore_span = 0.2 * ACTION_SPAN
     # 暖机，得到足够用来学习的经验
     obs_n = env.mpe_env.reset()
     while not all_agent_exp[0].can_learn():
         for t in range(20):
-            action_n = maddpg_agents.get_all_action(obs_n)
+            action_n = maddpg_agents.get_all_action(obs_n,explore_span)
             # action_n = [np.array([0, 0, 0, 1, 0]), np.array([0, 0, 0, 1, 0]), np.array([0, 0, 0, 1, 0])]
             new_obs_n, reward_n, done_n, info_n = env.mpe_env.step(action_n)
             for agent_index in range(agent_number):
@@ -46,10 +49,14 @@ def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
         score_one_episode = 0
         for t in range(20):
             env.mpe_env.render()
+            # 探索的幅度随机训练的进行逐渐减小
+            if i_episode >= 2000 and ((i_episode - 2000) % 500 == 0):
+                explore_span = 0.2 * ((5000 - i_episode) / 3000) * ACTION_SPAN
+                print(f"change the explore_span {explore_span}")
             # 每个智能体得到动作,动作的含义：第一个元素是交流信息，
             # 第二(向右)三(向左)个元素是力，第四(向上)五(向下)个也是力，可以为连续量
             # 实际的计算过程，用二三相减，得到向左或者是向右的力度，然后除质量，得到速度，最后得到位置，四五类似
-            action_n = maddpg_agents.get_all_action(obs_n)
+            action_n = maddpg_agents.get_all_action(obs_n, explore_span)
             # action_n = [np.array([0, 0, 0, 1, 0]), np.array([0, 0, 0, 1, 0]), np.array([0, 0, 0, 1, 0])]
             new_obs_n, reward_n, done_n, info_n = env.mpe_env.step(action_n)
             exp_index_n = []
@@ -83,6 +90,4 @@ def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
 
 
 if __name__ == '__main__':
-    run_mpe('run64_1', 5e-3, 5e-3)
-    run_mpe('run64_2', 5e-4, 5e-4)
-    run_mpe('run64_3', 5e-3, 5e-3)
+    run_mpe('run64_3', 1e-2, 1e-2)

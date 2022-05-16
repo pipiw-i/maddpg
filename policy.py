@@ -62,17 +62,17 @@ class maddpg_policy:
             self.critic_pred_list.append(critic_pred)
             self.critic_target_list.append(critic_target)
 
-    def __choose_action(self, s, agent_index):
+    def __choose_action(self, s, agent_index, explore_range):
         s = tf.reshape(s, [1, self.obs_dim])
         a = self.actor_pred_list[agent_index].actor(s)
         # 正式的测试中，可以去掉这个噪声 直接返回动作a[0]即可，这里是训练用，所以要加入噪声，使其能够充分的探索环境
-        u = tfp.distributions.Normal(a, 0.2 * self.action_span)
+        u = tfp.distributions.Normal(a, explore_range)
         action = tf.squeeze(u.sample(1), axis=0)[0]
         action = tf.clip_by_value(action, clip_value_min=-self.action_span, clip_value_max=self.action_span)
         return action
 
-    def get_all_action(self, obs_n):
-        action_n = [self.__choose_action(obs.astype(np.float32), agent_index) for obs, agent_index in
+    def get_all_action(self, obs_n, explore_range):
+        action_n = [self.__choose_action(obs.astype(np.float32), agent_index, explore_range) for obs, agent_index in
                     zip(obs_n, range(self.agent_number))]
         action_n = [action.numpy() for action in action_n]
         return action_n

@@ -1,6 +1,6 @@
 import numpy as np
-from RL_algorithm_package.maddpg.mpe.core import World, Agent, Landmark
-from RL_algorithm_package.maddpg.mpe.scenario import BaseScenario
+from mpe.core import World, Agent, Landmark
+from mpe.scenario import BaseScenario
 
 
 class Scenario(BaseScenario):

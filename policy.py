@@ -7,9 +7,8 @@ import numpy as np
 import os
 import tensorflow as tf
 import tensorflow_probability as tfp
-from tensorboard import summary
-from RL_algorithm_package.maddpg.actor_critic_net import actor
-from RL_algorithm_package.maddpg.actor_critic_net import critic
+from actor_critic_net import actor
+from actor_critic_net import critic
 
 
 class maddpg_policy:
@@ -150,8 +149,6 @@ class maddpg_policy:
                 loss_critic = tf.reduce_mean(loss_critic)
                 critic_gradients = Tape.gradient(loss_critic, critic_pred.trainable_variables)
                 critic_pred.optimizer.apply_gradients(zip(critic_gradients, critic_pred.trainable_variables))
-                # 更新actor
-
         for agent_index in range(self.agent_number):
             self.soft_param_update(self.critic_target_list[agent_index].critic,
                                    self.critic_pred_list[agent_index].critic)

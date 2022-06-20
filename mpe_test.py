@@ -6,8 +6,8 @@
 from matplotlib import pyplot as plt
 import os
 import numpy as np
-from RL_algorithm_package.maddpg.policy import maddpg_policy
-from RL_algorithm_package.maddpg.mpe_env import mpe_env
+from policy import maddpg_policy
+from mpe_env import mpe_env
 import time
 
 

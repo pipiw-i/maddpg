@@ -6,13 +6,12 @@
 from matplotlib import pyplot as plt
 import os
 import numpy as np
-from RL_algorithm_package.maddpg.policy import maddpg_policy
-from RL_algorithm_package.maddpg.mpe_env import mpe_env
-from RL_algorithm_package.maddpg.shared_exp import SharedExp
+from policy import maddpg_policy
+from mpe_env import mpe_env
+from shared_exp import SharedExp
 
 SEED = 65535
 ACTION_SPAN = 0.5
-
 
 
 def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
@@ -37,7 +36,7 @@ def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
     obs_n = env.mpe_env.reset()
     while not all_agent_exp[0].can_learn():
         for t in range(20):
-            action_n = maddpg_agents.get_all_action(obs_n,explore_span)
+            action_n = maddpg_agents.get_all_action(obs_n, explore_span)
             # action_n = [np.array([0, 0, 0, 1, 0]), np.array([0, 0, 0, 1, 0]), np.array([0, 0, 0, 1, 0])]
             new_obs_n, reward_n, done_n, info_n = env.mpe_env.step(action_n)
             for agent_index in range(agent_number):
@@ -47,6 +46,7 @@ def run_mpe(save_file, actor_learning_rate, critic_learning_rate):
     for i_episode in range(5000):
         obs_n = env.mpe_env.reset()
         score_one_episode = 0
+        # 20是单个回合内的步数，可以设置的大一点
         for t in range(20):
             env.mpe_env.render()
             # 探索的幅度随机训练的进行逐渐减小

@@ -3,9 +3,9 @@
 # @Author :  wangshulei
 # @FileName: mpe_env.py
 # @Software: PyCharm
-from RL_algorithm_package.maddpg.mpe.environment import MultiAgentEnv
-import RL_algorithm_package.maddpg.mpe.scenarios as scenarios
-from RL_algorithm_package.maddpg.utils import space_n_to_shape_n
+from mpe.environment import MultiAgentEnv
+import mpe.scenarios as scenarios
+from utils import space_n_to_shape_n
 
 
 class mpe_env:

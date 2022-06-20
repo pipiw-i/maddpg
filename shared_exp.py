@@ -5,7 +5,7 @@
 # @Software: PyCharm
 import pandas as pd
 import numpy as np
-from RL_algorithm_package.maddpg.exp import Exp
+from exp import Exp
 
 
 class SharedExp(Exp):
